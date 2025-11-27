@@ -67,9 +67,11 @@ const Game: React.FC<GameProps> = ({ subject }) => {
 
   if (gameState === 'menu') {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl border border-slate-700 p-8">
-        <h2 className="text-4xl font-bold mb-2 text-white">Desafío de {subject}</h2>
-        <p className="text-slate-400 mb-8">Pon a prueba tus conocimientos</p>
+      <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl border border-slate-700 p-8 overflow-y-auto scrollbar-hide">
+        <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 text-white">Desafío de {subject}</h2>
+            <p className="text-slate-400 mb-8">Pon a prueba tus conocimientos</p>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl">
           {(['Fácil', 'Medio', 'Difícil'] as const).map((level) => (
@@ -89,7 +91,7 @@ const Game: React.FC<GameProps> = ({ subject }) => {
 
   if (gameState === 'finished') {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl border border-slate-700 text-center">
+      <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl border border-slate-700 text-center overflow-y-auto p-4 scrollbar-hide">
         <div className="text-6xl mb-4">🏆</div>
         <h2 className="text-3xl font-bold text-white mb-4">¡Juego Terminado!</h2>
         <p className="text-xl text-slate-300 mb-8">
@@ -108,19 +110,19 @@ const Game: React.FC<GameProps> = ({ subject }) => {
   const question = questions[currentQIndex];
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/50 rounded-xl border border-slate-700 p-6 max-w-4xl mx-auto w-full">
-        <div className="flex justify-between items-center mb-8">
-            <span className="text-slate-400">Pregunta {currentQIndex + 1} de {questions.length}</span>
+    <div className="flex flex-col h-full bg-slate-900/50 rounded-xl border border-slate-700 p-4 md:p-6 max-w-4xl mx-auto w-full overflow-y-auto scrollbar-hide">
+        <div className="flex justify-between items-center mb-6">
+            <span className="text-slate-400 text-sm">Pregunta {currentQIndex + 1} de {questions.length}</span>
             <span className={`px-3 py-1 rounded-full text-xs font-bold border ${config.color.replace('text-', 'border-')} ${config.color}`}>
                 Puntos: {score}
             </span>
         </div>
 
-        <h3 className="text-2xl font-semibold text-white mb-8 leading-relaxed">
+        <h3 className="text-lg md:text-2xl font-semibold text-white mb-6 leading-relaxed">
             {question.question}
         </h3>
 
-        <div className="grid grid-cols-1 gap-4 mb-8">
+        <div className="grid grid-cols-1 gap-3 md:gap-4 mb-6">
             {question.options.map((option, idx) => {
                 let btnClass = "bg-slate-800 border-slate-600 hover:bg-slate-700";
                 if (selectedOption !== null) {
@@ -134,22 +136,22 @@ const Game: React.FC<GameProps> = ({ subject }) => {
                         key={idx}
                         onClick={() => handleAnswer(idx)}
                         disabled={selectedOption !== null}
-                        className={`p-4 rounded-lg border text-left transition-all ${btnClass}`}
+                        className={`p-3 md:p-4 rounded-lg border text-left transition-all ${btnClass}`}
                     >
                         <span className="mr-3 font-mono opacity-50">{String.fromCharCode(65 + idx)}.</span>
-                        {option}
+                        <span className="text-sm md:text-base">{option}</span>
                     </button>
                 )
             })}
         </div>
 
         {showExplanation && (
-            <div className="bg-blue-900/20 border border-blue-800 p-4 rounded-lg mb-6 text-blue-200">
+            <div className="bg-blue-900/20 border border-blue-800 p-4 rounded-lg mb-6 text-blue-200 text-sm md:text-base">
                 <strong>Explicación:</strong> {question.explanation}
             </div>
         )}
 
-        <div className="mt-auto flex justify-end">
+        <div className="mt-auto flex justify-end pb-4">
             <button
                 onClick={nextQuestion}
                 disabled={selectedOption === null}
