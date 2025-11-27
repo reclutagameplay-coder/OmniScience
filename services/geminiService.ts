@@ -4,9 +4,31 @@ import { Subject, QuizQuestion } from '../types';
 // Initialize the Gemini client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// --- Caching System ---
-const theoryCache: Record<string, string> = {}; // Key format: "Subject-Topic"
-const topicsCache: Record<string, string[]> = {}; // Key format: "Subject"
+// --- Caching System with Persistence ---
+
+// Helper to load from local storage safely
+const loadCache = <T>(key: string): T | null => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  } catch (e) {
+    console.warn("Could not load cache", e);
+    return null;
+  }
+};
+
+// Helper to save to local storage safely
+const saveCache = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.warn("Storage full or unavailable", e);
+  }
+};
+
+// Initialize caches from storage or empty object
+const theoryCache: Record<string, string> = loadCache<Record<string, string>>('theoryCache') || {};
+const topicsCache: Record<string, string[]> = loadCache<Record<string, string[]>>('topicsCache') || {};
 
 /**
  * Solves a problem using the Thinking Model (Gemini 2.5/3.0 Pro) for high reasoning.
@@ -41,7 +63,7 @@ export const solveProblem = async (subject: Subject, problem: string): Promise<s
 };
 
 /**
- * Explains a theoretical concept with caching.
+ * Explains a theoretical concept with persistent caching.
  */
 export const getTheoryExplanation = async (subject: Subject, topic: string): Promise<string> => {
   const cacheKey = `${subject}-${topic}`;
@@ -53,7 +75,7 @@ export const getTheoryExplanation = async (subject: Subject, topic: string): Pro
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash", // Fast for text generation
       contents: `Explica detalladamente el tema "${topic}" en el contexto de ${subject}.
-      La explicación debe ser visualmente rica y estructurada en Markdown.
+      La explicación debe ser educativa, visualmente clara y estructurada en Markdown.
       
       Estructura requerida:
       # Título del Concepto
@@ -68,15 +90,19 @@ export const getTheoryExplanation = async (subject: Subject, topic: string): Pro
       ## Explicación Detallada
       [Desarrollo del tema usando párrafos claros]
 
-      ## Analogía / Ejemplo Real
-      [Una comparación simple o uso práctico]
+      ## Analogía o Ejemplo
+      > [Usa un bloque de cita para una analogía memorable o un ejemplo del mundo real]
 
       Usa **negritas** para términos importantes.
       `,
     });
 
     const text = response.text || "No hay explicación disponible.";
-    theoryCache[cacheKey] = text; // Save to cache
+    
+    // Update cache and persist
+    theoryCache[cacheKey] = text;
+    saveCache('theoryCache', theoryCache);
+    
     return text;
   } catch (error) {
     console.error("Error fetching theory:", error);
@@ -124,7 +150,7 @@ export const generateQuiz = async (subject: Subject, difficulty: 'Fácil' | 'Med
 };
 
 /**
- * Suggests topics for the theory section with caching.
+ * Suggests topics for the theory section with persistent caching.
  */
 export const suggestTopics = async (subject: Subject): Promise<string[]> => {
     if (topicsCache[subject]) {
@@ -144,7 +170,11 @@ export const suggestTopics = async (subject: Subject): Promise<string[]> => {
             }
         });
         const topics = JSON.parse(response.text || "[]");
-        topicsCache[subject] = topics; // Save to cache
+        
+        // Update cache and persist
+        topicsCache[subject] = topics;
+        saveCache('topicsCache', topicsCache);
+        
         return topics;
     } catch (e) {
         return ["Conceptos Básicos", "Historia", "Aplicaciones Modernas"];
